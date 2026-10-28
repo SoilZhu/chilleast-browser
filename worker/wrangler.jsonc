@@ -1,0 +1,60 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "chilleast-browser",
+  "main": "src/index.ts",
+  "compatibility_date": "2025-09-01",
+
+  // 说明：这里曾经尝试过 Smart Placement（mode: smart, hint: apac），
+  // 目的是让 Worker 实例靠近上游学校服务器，缩短中转时的逐跳延迟。
+  // 实测结论：Cloudflare 在湖南没有边缘节点，最近只能落到新加坡/香港，
+  // 单跳回访农大仍需 1.5~3s（本机直连只要 0.08~0.11s），7 跳累计仍 20s+，
+  // 无法解决问题；同时它会让静态资源一起漂移，反而拖慢官网首屏。
+  // 因此已移除 placement，恢复默认行为（就近服务用户）。
+
+  "observability": {
+    "enabled": true
+  },
+  "assets": {
+    "directory": "../web/dist",
+    "binding": "ASSETS",
+
+    // run_worker_first 曾经是 `true`，现在收窄为「只让需要 Worker 逻辑的路径走 Worker」。
+    //
+    // 为什么需要收窄：开启 Smart Placement 后，凡是走 User Worker 的请求都会到
+    // 被调度的那个节点处理，静态资源也跟着跑会拖慢首屏（wrangler 会警告）。
+    //
+    // ⚠️ 关键约束：`/web/*` **必须**留在 Worker 里，不能交给 Assets 直接处理。
+    // 因为前端构建产物在 dist 根目录（dist/assets/...、dist/index.html、dist/home.html），
+    // 而对外访问路径带 `/web` 前缀。把请求映射到真实文件这一步是在
+    // `src/index.ts` 里做的（剥掉 `/web` 前缀后再 ASSETS.fetch）。
+    // 一旦让 `/web/*` 绕过 Worker，Assets 会去找 dist/web/... 这个并不存在的目录，
+    // 命中 not_found_handling 的 SPA 回退，于是所有 JS/CSS 都返回 index.html
+    // （表现为页面白屏、控制台报 MIME 错误）。
+    //
+    // 同理，`/` 也必须留在 Worker 里：根路径要返回介绍页（dist/home.html），
+    // 而不是让 Assets 回退到 SPA 的 index.html（那就是登录框了）。
+    //
+    // 路由约定（与 src/index.ts 的分发逻辑严格对应）：
+    //   api.chilleast.soilzhu.su -> Worker（/api/*, /health, / 返回健康状态与业务接口）
+    //   web.chilleast.soilzhu.su -> Web 端 SPA（/ 直接返回 index.html，历史 /web/* 301 重定向）
+    "run_worker_first": ["/api/*", "/health", "/api", "/", "/web", "/web/*"],
+
+    "not_found_handling": "single-page-application"
+  },
+  "vars": {
+    "SERVICE_NAME": "chilleast-browser",
+    // 课表 ICS 订阅服务地址（公开、非敏感）。写入密钥 ICS_API_KEY 必须用
+    // `wrangler secret put ICS_API_KEY` 配置，不要写进本文件。
+    "ICS_BASE_URL": "https://ics.chilleast.soilzhu.su"
+  },
+  "routes": [
+    {
+      "pattern": "web.chilleast.soilzhu.su",
+      "custom_domain": true
+    },
+    {
+      "pattern": "api.chilleast.soilzhu.su",
+      "custom_domain": true
+    }
+  ]
+}

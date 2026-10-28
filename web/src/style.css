@@ -1,0 +1,976 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================================================
+ * ChillEast Browser · Google Material Design 2 视觉规范
+ * ----------------------------------------------------------------------------
+ * 只借鉴 Google Keep / Gmail 的「风格语言」，不 1:1 复刻：
+ *   - MD2 elevation（dp1/dp2/dp3…）+ 1px 描边卡片
+ *   - 药丸形搜索框（#f1f3f4 填充、聚焦时白底 + dp1）
+ *   - 圆形图标按钮（40dp，hover 时 8% 黑色蒙层）
+ *   - Roboto/Google Sans 字阶，正文 #202124 / 次要 #5f6368
+ *   - 图标用官方 Material Icons 字体（outlined / filled 双变体）
+ *   - 强调色与原版 App 一致，为「湖南农业大学绿」#09C489，而非 Google 蓝
+ * ========================================================================== */
+
+/* ----------------------------------------------------------------------------
+ * Material Icons 字体（子集）
+ * 只含 `components/icon-map.ts` 声明的字形，两个变体共约 12 KB。
+ * 重新生成：node scripts/build-icons.mjs
+ * -------------------------------------------------------------------------- */
+@font-face {
+  font-family: 'Material Icons Outlined';
+  font-style: normal;
+  font-weight: 400;
+  font-display: block;
+  src: url('./assets/material-icons/material-icons-outlined.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Material Icons';
+  font-style: normal;
+  font-weight: 400;
+  font-display: block;
+  src: url('./assets/material-icons/material-icons-filled.woff2') format('woff2');
+}
+
+:root {
+  color-scheme: light;
+
+  /* MD2 Surface tokens */
+  --color-md-background: #ffffff;
+  --color-md-surface-1: #f8f9fa;
+  --color-md-surface-2: #f1f3f4;
+  --color-md-surface-3: #e8eaed;
+  --color-md-surface-card: #ffffff;
+  --color-md-surface-overlay: #ffffff;
+  --color-md-surface-field: #ffffff;
+  --color-md-search: #eff5f9;
+  --color-md-search-hover: #e6edf3;
+  --color-md-divider: #dadce0;
+  --color-md-card-border: #e0e0e0;
+  --color-md-card-hover: #f8f9fa;
+
+  /* Typography / Content */
+  --color-md-text-high: #202124;
+  --color-md-text-medium: #5f6368;
+  --color-md-text-disabled: #80868b;
+  --color-md-text-hint: #9aa0a6;
+  --color-md-secondary: #5f6368;
+
+  /* Brand green (#09C489) variations */
+  --color-brand-surface: #f2fbf7;
+  --color-brand-50: #e6f9f3;
+  --color-brand-100: #cefae9;
+  --color-brand-200: #9df3d2;
+
+  /* Semantic status & alert surfaces & text */
+  --color-md-accent-surface: #e8f0fe;
+  --color-md-success-surface: #e6f4ea;
+  --color-md-success-text: #0d652d;
+  --color-md-warning-surface: #fef7e0;
+  --color-md-warning-text: #a56600;
+  --color-md-danger-surface: #fce8e6;
+  --color-md-danger-text: #b3261e;
+  --color-md-info-surface: #e8f0fe;
+  --color-md-info-text: #185abc;
+
+  /* Course text colors for Timetable */
+  --course-color-0: #06845d;
+  --course-color-1: #185abc;
+  --course-color-2: #681da8;
+  --course-color-3: #a56600;
+  --course-color-4: #b3261e;
+  --course-color-5: #00695c;
+  --course-color-6: #283593;
+
+  /* Scrollbar */
+  --color-scrollbar-thumb: rgba(60, 64, 67, 0.18);
+  --color-scrollbar-thumb-hover: rgba(60, 64, 67, 0.32);
+}
+
+.dark {
+  color-scheme: dark;
+
+  /* MD2 Dark Theme palette (Google Keep / Material Design 2 Dark Theme) */
+  --color-md-background: #202124;
+  --color-md-surface-1: #28292c;
+  --color-md-surface-2: #303134;
+  --color-md-surface-3: #3c4043;
+  --color-md-surface-card: #202124;
+  --color-md-surface-overlay: #2d2e30;
+  --color-md-surface-field: #202124;
+  --color-md-search: #303134;
+  --color-md-search-hover: #3c4043;
+  --color-md-divider: #3c4043;
+  --color-md-card-border: #3c4043;
+  --color-md-card-hover: #28292c;
+
+  /* Typography / Content */
+  --color-md-text-high: #e8eaed;
+  --color-md-text-medium: #9aa0a6;
+  --color-md-text-disabled: #80868b;
+  --color-md-text-hint: #5f6368;
+  --color-md-secondary: #9aa0a6;
+
+  /* Brand green in dark mode */
+  --color-brand-surface: rgba(9, 196, 137, 0.12);
+  --color-brand-50: rgba(9, 196, 137, 0.15);
+  --color-brand-100: rgba(9, 196, 137, 0.25);
+  --color-brand-200: rgba(9, 196, 137, 0.4);
+
+  /* Semantic status & alert surfaces & text in dark mode */
+  --color-md-accent-surface: #1a2738;
+  --color-md-success-surface: #172b21;
+  --color-md-success-text: #81c995;
+  --color-md-warning-surface: #332814;
+  --color-md-warning-text: #fdd663;
+  --color-md-danger-surface: #371c1b;
+  --color-md-danger-text: #f28b82;
+  --color-md-info-surface: #1a2738;
+  --color-md-info-text: #8ab4f8;
+
+  /* Course text colors for Timetable (brighter pastel tones on dark surface) */
+  --course-color-0: #2ad69b;
+  --course-color-1: #8ab4f8;
+  --course-color-2: #c58af9;
+  --course-color-3: #fdd663;
+  --course-color-4: #f28b82;
+  --course-color-5: #4db6ac;
+  --course-color-6: #9fa8da;
+
+  /* Scrollbar */
+  --color-scrollbar-thumb: rgba(255, 255, 255, 0.2);
+  --color-scrollbar-thumb-hover: rgba(255, 255, 255, 0.35);
+}
+
+@layer base {
+  html {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* MD2 图标基类：24dp 网格内居中，随 currentColor 变色 */
+  .mi {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-weight: normal;
+    font-style: normal;
+    line-height: 1;
+    letter-spacing: normal;
+    text-transform: none;
+    white-space: nowrap;
+    word-wrap: normal;
+    direction: ltr;
+    -webkit-font-feature-settings: 'liga';
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    user-select: none;
+    /* 行高 1 + 居中，避免字形基线偏移 */
+    vertical-align: middle;
+  }
+
+  .mi-outlined {
+    font-family: 'Material Icons Outlined';
+  }
+
+  .mi-filled {
+    font-family: 'Material Icons';
+  }
+
+  body {
+    font-family: 'Google Sans', Roboto, -apple-system, BlinkMacSystemFont, 'Segoe UI',
+      'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+    color: var(--color-md-text-high, #202124);
+    background-color: var(--color-md-background, #ffffff);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* MD2 焦点环：只在键盘导航时出现，鼠标点击不出现 */
+  :focus-visible {
+    outline: 2px solid #09C489;
+    outline-offset: 2px;
+  }
+}
+
+@layer components {
+  /* ------------------------------------------------------------------
+   * 1. 表面（Surface）
+   * ------------------------------------------------------------------ */
+
+  /* ------------------------------------------------------------------
+   * 1. 表面（Surface）—— 三层，不许套娃
+   * ------------------------------------------------------------------
+   * 改版前的毛病：几乎所有东西都包一层 md-card，卡片里再套 md-card，
+   * 一层白底 + 一层描边 + 一层圆角，视觉上全是「盒子」，页面像表格。
+   *
+   * Google Keep / Gmail 的真实做法是**分三层**，同一层的东西不互相套：
+   *
+   *   ① 画布（canvas）   白底、无边框，直接放内容
+   *   ② 分组（group）    浅灰底 + 圆角，用来分隔成组，**无描边**
+   *   ③ 卡片（card）     白底 + 1px 描边，只给「独立的、可单独操作的对象」
+   *
+   * 规则（写新页面照这个判断）：
+   *   - 列表里的每一行 → 不是卡片，用 .md-row（无边框，靠 hover 反馈）
+   *   - 一个区块的容器   → 不是卡片，用 .md-group（浅灰底）或直接画布
+   *   - 真正独立的实体   → 才是 .md-card（如一张便签、一张工单、一个功能入口）
+   *   - **卡片里永远不再放卡片**；卡片里需要分组用分割线（.md-divider）
+   * ------------------------------------------------------------------ */
+
+  /* 顶栏药丸搜索框（Keep 实测 #eff5f9 冷灰填充；写成组件类，避免依赖自定义 color token） */
+  .md-searchbar {
+    @apply flex items-center h-10 gap-3 rounded-md2-md pl-4 pr-2
+      bg-md-search
+      transition-colors duration-md2-short ease-md2-standard;
+  }
+  .md-searchbar:hover {
+    @apply bg-md-search-hover;
+  }
+  .md-searchbar-active {
+    @apply bg-md-surface-card shadow-dp1;
+  }
+
+  /* 页内搜索框（列表上方的过滤输入，与顶栏搜索框同一套语言）
+   * 左侧预留 36px 给放大镜图标，用 .md-search-inline-icon 定位 */
+  .md-search-inline {
+    @apply relative w-full sm:w-60;
+  }
+  .md-search-inline-input {
+    @apply md-field pl-9 py-2 rounded-md2-pill;
+  }
+  .md-search-inline-icon {
+    @apply absolute left-3 top-1/2 -translate-y-1/2 text-md-text-medium pointer-events-none;
+  }
+
+  /* 提示条（alert / banner）：全站唯一实现
+   * 浅色底 + 无描边 + 左图标，圆角 4px；不再各处手写 border-[#f6aea9] 这类色值。 */
+  .md-alert {
+    @apply flex items-start gap-2.5 rounded-md2-sm px-3.5 py-2.5
+      text-[13px] leading-relaxed;
+  }
+  .md-alert-dense {
+    @apply px-3 py-2 text-md2-caption;
+  }
+  .md-alert-title {
+    @apply text-[13px] font-medium leading-relaxed;
+  }
+  .md-alert-text {
+    @apply text-md2-caption leading-relaxed opacity-80;
+  }
+  .md-alert-info {
+    @apply bg-md-info-surface text-md-info-text;
+  }
+  .md-alert-success {
+    @apply bg-md-success-surface text-md-success-text;
+  }
+  .md-alert-warning {
+    @apply bg-md-warning-surface text-md-warning-text;
+  }
+  .md-alert-error {
+    @apply bg-md-danger-surface text-md-danger-text;
+  }
+
+  /* 页内工具栏（周次切换这类控制条）
+   * 改版前它被包成 md-card，但它不是「独立实体」，只是一条控制条：
+   * 落画布、底部 1px 分隔线、不加边框圆角。 */
+  .md-toolbar {
+    @apply flex flex-col justify-between gap-3 py-2 border-b border-md-divider
+      sm:flex-row sm:items-center;
+  }
+
+  /* 周次快速切换（1-20 周）：一条药丸形轨道，选中态为主色浅底 */
+  .md-week-strip {
+    @apply flex items-center gap-0.5 overflow-x-auto rounded-md2-sm
+      border border-md-divider bg-md-surface-card p-0.5 no-scrollbar;
+  }
+  .md-week-chip {
+    @apply h-7 w-7 shrink-0 rounded-md2-xs text-[11px] font-medium tabular-nums
+      text-md-text-medium
+      transition-colors duration-md2-short ease-md2-standard
+      hover:bg-md-surface-2 active:bg-md-surface-3;
+  }
+  .md-week-chip-active {
+    @apply bg-brand-50 text-md-primary font-bold;
+  }
+  /* 当前自然周（但不在查看周）用一圈细描边标出 */
+  .md-week-chip-current {
+    @apply ring-1 ring-inset ring-brand-200 text-md-primary;
+  }
+
+  /* ③ 卡片：白底 + 1px 描边 + 无阴影（默认静止态）。
+   * 只用于「独立实体」，不要拿它当页面分区容器。 */
+  .md-card {
+    @apply bg-md-surface-card border border-md-card-border rounded-md2-md;
+  }
+
+  /* 可交互卡片：hover 时轻微抬升 + 描边加深 */
+  .md-card-interactive {
+    @apply md-card transition-all duration-md2-short ease-md2-standard cursor-pointer;
+  }
+  .md-card-interactive:hover {
+    @apply border-md-divider shadow-dp1;
+  }
+
+  /* ② 分组容器：浅灰底 + 圆角、**无描边**。
+   * 用于把一组同类内容框起来（Keep 的便签墙、设置分组、功能分区）。
+   * 这是「什么都包卡片」的主要替代品：浅灰底比白底卡片轻得多。 */
+  .md-group {
+    @apply bg-md-surface-1 rounded-md2-lg overflow-hidden;
+  }
+  /* 分组内的行：无边框，靠 hover 反馈，行与行之间用 1px 分割线 */
+  .md-group > * + * {
+    @apply border-t border-md-card-border;
+  }
+
+  /* ① 行（row）：列表里的一条内容。
+   * 没有描边、没有圆角、没有白底——它属于某个分组或画布的一部分。
+   * Keep 的便签列表、Gmail 的邮件列表都是这个层级。 */
+  .md-row {
+    @apply flex w-full items-center gap-3 px-4 py-3 text-left
+      transition-colors duration-md2-short ease-md2-standard
+      hover:bg-md-surface-1;
+  }
+  /* 可点击行的强调态（当前选中） */
+  .md-row-active {
+    @apply md-row bg-brand-50 hover:bg-brand-100;
+  }
+
+  /* 悬浮卡片（弹出层/对话框） */
+  .md-surface-overlay {
+    @apply bg-md-surface-overlay rounded-md2-md shadow-dp8;
+  }
+
+  /* ------------------------------------------------------------------
+   * 2. 按钮（MD2 Button 规范）
+   * ------------------------------------------------------------------ */
+  .md-btn-text {
+    @apply inline-flex items-center justify-center gap-2 h-9 px-3 rounded-md2-sm
+      text-md2-button text-md-primary bg-transparent
+      transition-colors duration-md2-short ease-md2-standard
+      hover:bg-brand-50 active:bg-brand-100
+      disabled:opacity-40 disabled:pointer-events-none select-none;
+  }
+
+  .md-btn-outlined {
+    @apply inline-flex items-center justify-center gap-2 h-9 px-4 rounded-md2-sm
+      text-md2-button text-md-primary bg-transparent border border-md-divider
+      transition-colors duration-md2-short ease-md2-standard
+      hover:bg-brand-50 active:bg-brand-100
+      disabled:opacity-40 disabled:pointer-events-none select-none;
+  }
+
+  .md-btn-filled {
+    @apply inline-flex items-center justify-center gap-2 h-9 px-5 rounded-md2-sm
+      text-md2-button text-white bg-md-primary shadow-dp1
+      transition-all duration-md2-short ease-md2-standard
+      hover:bg-brand-600 hover:shadow-dp2 active:bg-brand-800 active:shadow-dp1
+      disabled:opacity-40 disabled:pointer-events-none disabled:shadow-none select-none;
+  }
+
+  .md-btn-danger {
+    @apply inline-flex items-center justify-center gap-2 h-9 px-4 rounded-md2-sm
+      text-md2-button text-md-danger bg-transparent border border-md-divider
+      transition-colors duration-md2-short ease-md2-standard
+      hover:bg-md-danger-surface active:bg-md-danger-surface active:brightness-95
+      disabled:opacity-40 disabled:pointer-events-none select-none;
+  }
+
+  /* 圆形图标按钮（40dp，Google 工具栏标准） */
+  .md-icon-btn {
+    @apply relative inline-flex items-center justify-center w-10 h-10 rounded-full
+      text-md-text-medium bg-transparent
+      transition-colors duration-md2-short ease-md2-standard
+      hover:bg-md-surface-2 active:bg-md-surface-3
+      disabled:opacity-40 disabled:pointer-events-none select-none;
+  }
+
+  .md-icon-btn-sm {
+    @apply relative inline-flex items-center justify-center w-8 h-8 rounded-full
+      text-md-text-medium bg-transparent
+      transition-colors duration-md2-short ease-md2-standard
+      hover:bg-md-surface-2 active:bg-md-surface-3
+      disabled:opacity-40 disabled:pointer-events-none select-none;
+  }
+
+  /* ------------------------------------------------------------------
+   * 3. 表单（MD2/MD3 Text Field：outlined 变体）
+   * ------------------------------------------------------------------ */
+
+  .md-field {
+    @apply w-full px-3.5 py-2.5 rounded-md2-sm bg-md-surface-field
+      border border-md-divider
+      text-md2-body2 text-md-text-high placeholder-md-text-disabled
+      transition-all duration-md2-short ease-md2-standard
+      hover:border-md-text-medium
+      focus:outline-none focus:border-md-primary focus:ring-1 focus:ring-md-primary;
+  }
+
+  .md-field:hover:not(:focus) {
+    @apply border-md-text-medium;
+  }
+
+  /* 下拉选择器（外观与输入框一致，右侧箭头用 Material Icons 的 arrow_drop_down） */
+  .md-select {
+    @apply md-field appearance-none cursor-pointer pr-9 bg-no-repeat;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='%235f6368'%3E%3Cpath d='M7 10l5 5 5-5H7z'/%3E%3C/svg%3E");
+    background-position: right 8px center;
+    background-size: 20px;
+  }
+  .dark .md-select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='%239aa0a6'%3E%3Cpath d='M7 10l5 5 5-5H7z'/%3E%3C/svg%3E");
+  }
+
+  .md-label {
+    @apply block text-md2-caption font-medium text-md-text-medium mb-1.5;
+  }
+
+  /* MD2 勾选框：用 Material Icons 的 check_box / check_box_outline_blank 字形，
+     外观尺寸 18dp，选中为主色实心。原生 input 只留交互语义。 */
+  .md-checkbox {
+    @apply appearance-none inline-block w-[18px] h-[18px] m-0 align-middle
+      cursor-pointer transition-colors duration-md2-short;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%235f6368'%3E%3Cpath d='M19 5v14H5V5h14m0-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2z'/%3E%3C/svg%3E");
+    background-size: 18px 18px;
+    background-position: center;
+    background-repeat: no-repeat;
+  }
+  .dark .md-checkbox {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%239aa0a6'%3E%3Cpath d='M19 5v14H5V5h14m0-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2z'/%3E%3C/svg%3E");
+  }
+  .md-checkbox:hover {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2309C489'%3E%3Cpath d='M19 5v14H5V5h14m0-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2z'/%3E%3C/svg%3E");
+  }
+  .md-checkbox:checked,
+  .md-checkbox:indeterminate {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2309C489'%3E%3Cpath d='M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14zM17.99 9l-1.41-1.42-6.59 6.59-2.58-2.57-1.42 1.41 4 3.99z'/%3E%3C/svg%3E");
+  }
+  .md-checkbox:disabled {
+    @apply opacity-40 cursor-not-allowed;
+  }
+
+  /* MD2 单选按钮：radio_button_checked / radio_button_unchecked 字形，18dp */
+  .md-radio {
+    @apply appearance-none inline-block w-[18px] h-[18px] m-0 align-middle
+      cursor-pointer rounded-full transition-colors duration-md2-short;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%235f6368'%3E%3Cpath d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8z'/%3E%3C/svg%3E");
+    background-size: 18px 18px;
+    background-position: center;
+    background-repeat: no-repeat;
+  }
+  .dark .md-radio {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%239aa0a6'%3E%3Cpath d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8z'/%3E%3C/svg%3E");
+  }
+  .md-radio:hover {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2309C489'%3E%3Cpath d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8z'/%3E%3C/svg%3E");
+  }
+  .md-radio:checked {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2309C489'%3E%3Cpath d='M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zm0-5C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8z'/%3E%3C/svg%3E");
+  }
+  .md-radio:disabled {
+    @apply opacity-40 cursor-not-allowed;
+  }
+
+  /* ------------------------------------------------------------------
+   * 4. 标签 / 徽章（MD2 Chip）
+   * ------------------------------------------------------------------ */
+
+  .md-chip {
+    @apply inline-flex items-center gap-1 h-6 px-2.5 rounded-md2-pill
+      text-[11px] font-medium leading-none whitespace-nowrap;
+  }
+
+  .md-chip-success {
+    @apply md-chip bg-md-success-surface text-md-success-text;
+  }
+  .md-chip-warning {
+    @apply md-chip bg-md-warning-surface text-md-warning-text;
+  }
+  .md-chip-danger {
+    @apply md-chip bg-md-danger-surface text-md-danger-text;
+  }
+  .md-chip-info {
+    @apply md-chip bg-md-info-surface text-md-info-text;
+  }
+  .md-chip-neutral {
+    @apply md-chip bg-md-surface-2 text-md-text-medium;
+  }
+
+  /* 可点击筛选 chip（Keep 的标签栏样式） */
+  .md-chip-filter {
+    @apply inline-flex items-center gap-1.5 h-8 px-3.5 rounded-md2-pill
+      text-md2-button border border-md-divider bg-md-surface-card text-md-text-medium
+      transition-colors duration-md2-short ease-md2-standard
+      hover:bg-md-surface-1 active:bg-md-surface-2 select-none whitespace-nowrap;
+  }
+  .md-chip-filter-active {
+    @apply md-chip-filter bg-brand-50 border-brand-200 text-md-primary font-medium;
+  }
+
+  /* ------------------------------------------------------------------
+   * 5. 导航
+   * ------------------------------------------------------------------ */
+
+  /* 侧边抽屉导航项（MD2 Navigation Drawer，Gmail/Keep 同款）
+   * Keep 实测：行高 48px，图标左边距 24px，图标 24px，图标↔文字 32px，
+   * 选中态是「左贴边 + 右侧全圆角」的药丸（不是圆角矩形）。
+   */
+  .md-nav-item {
+    @apply flex items-center gap-8 h-12 pl-6 pr-6 rounded-r-md2-pill w-full
+      text-[14px] leading-5 font-normal text-md-text-medium
+      transition-colors duration-md2-short ease-md2-standard
+      hover:bg-md-surface-2 select-none cursor-pointer;
+  }
+  .md-nav-item-active {
+    @apply md-nav-item bg-brand-50 text-md-primary font-medium;
+  }
+  .md-nav-item-active:hover {
+    @apply bg-brand-100;
+  }
+
+  /* 抽屉分组小标题：与一级导航平行，48px 行高、14px 字号、中粗字重 */
+  .md-nav-group {
+    @apply flex items-center gap-2.5 w-full h-12 pl-6 pr-6 rounded-r-md2-pill
+      text-[14px] leading-5 font-medium text-md-text-high
+      transition-colors duration-md2-short ease-md2-standard
+      hover:bg-md-surface-2 select-none cursor-pointer;
+  }
+
+  /* 底部导航项（移动端） */
+  .md-bottom-nav-item {
+    @apply flex flex-col items-center justify-center gap-1 flex-1 py-1.5
+      text-[10px] font-medium text-md-text-medium
+      transition-colors duration-md2-short ease-md2-standard;
+  }
+  .md-bottom-nav-item-active {
+    @apply md-bottom-nav-item text-md-primary font-semibold;
+  }
+
+  /* ------------------------------------------------------------------
+   * 6. 列表项 / 分割线
+   * ------------------------------------------------------------------ */
+
+  /* 兼容旧代码：等价于 .md-row（无描边、无圆角，属于分组的一部分） */
+  .md-list-item {
+    @apply md-row cursor-pointer;
+  }
+
+  .md-divider {
+    @apply border-t border-md-card-border;
+  }
+
+  /* 行内分割线：分组里相邻行之间的 1px 细线（不含首行） */
+  .md-rows > * + * {
+    @apply border-t border-md-card-border;
+  }
+
+  /* ------------------------------------------------------------------
+   * 7. 瀑布流 / 网格（Keep 风格多列）
+   * ------------------------------------------------------------------ */
+
+  /* Keep 的瀑布流不是「固定几列」，而是「列宽固定在 ~236–280px、列数随窗口增长」。
+   * 好处：宽屏不会把卡片拉成又长又稀的一条，和参考图的手感一致。
+   */
+  .keep-grid {
+    column-width: 236px;
+    column-gap: 20px;
+    column-fill: balance;
+  }
+  @media (min-width: 1440px) {
+    .keep-grid {
+      column-width: 260px;
+      column-gap: 20px;
+    }
+  }
+  .keep-grid > * {
+    break-inside: avoid;
+    margin-bottom: 20px;
+    display: block;
+  }
+
+  /* 均等网格（用于功能入口） */
+  .md-grid-auto {
+    @apply grid gap-2.5;
+    grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
+  }
+
+  /* ------------------------------------------------------------------
+   * 8. 功能入口行（对应 App 功能页的网格项）
+   * ------------------------------------------------------------------ */
+
+  /* 改版前这里是「带描边的白卡片」放在「带描边的白卡片」里，两层盒子。
+   * 现在功能项是分组内的**行**：无描边、无白底，hover 才浮出浅灰。 */
+  .md-function-tile {
+    @apply flex items-center gap-3 p-3 rounded-md2-sm bg-transparent
+      transition-colors duration-md2-short ease-md2-standard
+      hover:bg-md-surface-2 active:bg-md-surface-3
+      cursor-pointer select-none text-left w-full;
+  }
+
+  /* 功能入口的图标底座（40dp 圆角方块 + 12% 品牌色底） */
+  .md-function-icon {
+    @apply w-10 h-10 rounded-md2-md flex items-center justify-center shrink-0;
+  }
+
+  /* ------------------------------------------------------------------
+   * 9. 对话框 / 底部抽屉
+   * ------------------------------------------------------------------ */
+
+  .md-scrim {
+    @apply fixed inset-0 z-50 bg-black/40 animate-md2-fade;
+  }
+
+  .md-dialog {
+    @apply w-full bg-md-surface-overlay rounded-md2-lg shadow-dp24 animate-md2-dialog overflow-hidden;
+  }
+
+  .md-dialog-header {
+    @apply flex items-start justify-between gap-4 px-6 pt-5 pb-3;
+  }
+
+  .md-dialog-title {
+    @apply text-md2-h6 text-md-text-high;
+  }
+
+  .md-dialog-body {
+    @apply px-6 pb-4 text-md2-body2 text-md-text-medium;
+  }
+
+  .md-dialog-actions {
+    @apply flex items-center justify-end gap-1 px-3 py-2.5;
+  }
+
+  /* ------------------------------------------------------------------
+   * 10. 骨架屏 / 加载
+   * ------------------------------------------------------------------ */
+
+  .md-skeleton {
+    @apply animate-pulse rounded-md2-sm bg-md-surface-2;
+  }
+
+  /* ------------------------------------------------------------------
+   * 11. 设置页 / 分组列表（对应 App 的设置项分组）
+   * ------------------------------------------------------------------ */
+
+  /* 设置分组容器：白底卡片，组内行之间用 1px 分割线。
+   * 设置页是少数**允许**白底卡片的场景：每个分组是一个独立可操作单元。 */
+  .md-settings-group {
+    @apply bg-md-surface-card border border-md-card-border rounded-md2-md overflow-hidden;
+  }
+  .md-settings-group > * + * {
+    @apply border-t border-md-card-border;
+  }
+
+  /* 分组小标题（MD2 subheader） */
+  .md-settings-header {
+    @apply px-4 pt-5 pb-2 text-md2-overline uppercase text-md-text-disabled;
+  }
+
+  /* 设置行右侧的次要说明文字 */
+  .md-settings-value {
+    @apply text-md2-body2 text-md-text-medium shrink-0 tabular-nums;
+  }
+
+  /* ------------------------------------------------------------------
+   * 11.5 章节标题（替代「一个区块就包一张卡片」）
+   * ------------------------------------------------------------------
+   * 改版前：每个区块都是 md-card 里放一个标题行 + 内容，页面全是盒子。
+   * 现在：标题直接落在画布上，内容跟在后面，只有内容本身需要边界时才用
+   * .md-group 或 .md-card。Keep 的「标签 / 提醒」就是这种裸标题。
+   */
+  .md-section-title {
+    @apply flex items-center gap-2 text-md2-section text-md-text-high;
+  }
+  .md-section-subtitle {
+    @apply mt-0.5 text-md2-caption text-md-text-medium;
+  }
+  /* 标题行右侧的动作（「全部」「刷新」这类文字按钮） */
+  .md-section-actions {
+    @apply ml-auto flex items-center gap-1.5 shrink-0;
+  }
+
+  /* ------------------------------------------------------------------
+   * 12. 拖拽排序列表（对应 App 的 ReorderableListView）
+   * ------------------------------------------------------------------ */
+
+  .md-sort-item {
+    @apply flex items-center gap-3 px-3 py-2.5 bg-md-surface-card
+      border border-md-card-border rounded-md2-md
+      transition-shadow duration-md2-short ease-md2-standard;
+  }
+  .md-sort-item-dragging {
+    @apply shadow-dp8 border-md-primary/30 z-10;
+  }
+  .md-sort-item-hidden {
+    @apply opacity-55;
+  }
+
+  /* 拖拽把手 */
+  .md-drag-handle {
+    @apply cursor-grab active:cursor-grabbing text-md-text-hint
+      hover:text-md-text-medium transition-colors duration-md2-short;
+  }
+
+  /* ------------------------------------------------------------------
+   * 13. 信息流 / 便签卡（全站唯一卡片形态）
+   * ------------------------------------------------------------------
+   * 首页信息流卡片 = Google Keep 便签骨架：
+   *   白底 + 1px 描边 + 8px 圆角 + 16px 内边距 + 卡头（标题 14/500）
+   *
+   * **其它页面也统一用这套**（.md-feed-card / NoteCard 组件）。
+   * 卡内绝不再套卡：卡内分组用 .md-feed-divider，卡内行用 .md-feed-row。
+   * ------------------------------------------------------------------ */
+
+  /* Keep 便签：内边距 16px、标题 14/500、正文 14/1.7（松弛感的关键是行高） */
+  .md-feed-card {
+    @apply md-card p-4;
+  }
+  .md-feed-card-header {
+    @apply flex items-center justify-between gap-2 mb-2.5;
+  }
+  .md-feed-card-title {
+    @apply text-[14px] leading-5 font-medium text-md-text-high;
+  }
+  /* 卡片内的分组小标题：12px 中灰，与 Keep 便签里的「运营 / 机械」同级 */
+  .md-feed-section-label {
+    @apply text-[12px] leading-4 text-md-text-medium;
+  }
+  /* 便签正文：比 MD2 body2 更松的行高，避免「一行挤一行」 */
+  .md-feed-text {
+    @apply text-[14px] leading-[1.7] text-md-text-high;
+  }
+
+  /* 卡内行：卡内列表的一条。
+   * **无描边、无圆角、无白底**——卡片本身已经是白底描边，
+   * 行只在 hover 时浮出浅灰，靠分割线区分彼此。 */
+  .md-feed-row {
+    @apply flex w-full items-center gap-3 py-2.5 text-left
+      rounded-md2-sm
+      transition-colors duration-md2-short ease-md2-standard
+      hover:bg-md-surface-1;
+  }
+  /* 卡内列表：行之间自动 1px 分割线（首行不加） */
+  .md-feed-rows > * + * {
+    @apply border-t border-md-card-border;
+  }
+
+  /* 卡内列表（无分割线版）：
+   * 全站列表统一去掉行间 1px 线 —— 一屏里既有卡片描边又有行分割线，
+   * 线条太多，页面像表格。改用「更大的行距 + hover 底色」区分相邻项。
+   * 需要分割线的地方（如详情里的字段区）才用 .md-feed-rows。 */
+  .md-feed-list > * + * {
+    @apply border-t-0;
+  }
+  /* 去掉分割线后，靠行距把相邻项拉开，避免挤成一片 */
+  .md-feed-list > .md-feed-row {
+    @apply py-3;
+  }
+  /* 卡内分割线（卡内分区用它，不要用盒子） */
+  .md-feed-divider {
+    @apply border-t border-md-card-border;
+  }
+  /* 卡内强调块：最多给一个浅色底，**不加描边、不加阴影** */
+  .md-feed-block {
+    @apply rounded-md2-sm bg-md-surface-1;
+  }
+
+  /* ------------------------------------------------------------------
+   * 13.5 待办圈（作业 / 日程任务的状态标记）
+   * ------------------------------------------------------------------
+   * 改版前作业列表左侧是一个 6px 实心小圆点，只表示「有个东西」，
+   * 既不可点击也不表达完成与否。参考 Google Tasks / Keep 的待办圈：
+   * 未完成 = 1.5px 灰描边空心圆，已完成 = 主色实心 + 白勾。
+   * 只改外观不动语义：只有 isManual 的作业才可点，其余仍是纯展示。
+   * ------------------------------------------------------------------ */
+
+  .md-todo-circle {
+    @apply inline-flex h-[18px] w-[18px] shrink-0 items-center justify-center
+      rounded-full border-[1.5px] border-md-text-hint bg-transparent
+      transition-colors duration-md2-short ease-md2-standard;
+  }
+  .md-todo-circle-done {
+    @apply md-todo-circle border-md-primary bg-md-primary text-white;
+  }
+  /* 可点击的那一类才给 hover / active 反馈。
+   * `:not(.md-todo-circle-done)` 是必须的：已完成圈是主色实心 + 白勾，
+   * 如果 hover 时被 clickable 的浅绿底盖掉，白勾会落在浅底上几乎看不见。
+   * 已完成圈的可点反馈只用「按压缩放」，不动底色。 */
+  .md-todo-circle-clickable:not(.md-todo-circle-done) {
+    @apply cursor-pointer hover:border-md-primary hover:bg-brand-50 active:scale-95;
+  }
+  .md-todo-circle-done.md-todo-circle-clickable {
+    @apply cursor-pointer active:scale-95;
+  }
+
+  /* ------------------------------------------------------------------
+   * 14. 表格（成绩/工单等宽屏数据列表）
+   * ------------------------------------------------------------------ */
+
+  /* 表格直接落在画布或分组上，不再套卡片：thead 浅灰、行间 1px 细线。
+   * 表头不用描边盒，靠底色和字重区分层级。 */
+  .md-table {
+    @apply w-full text-left border-collapse;
+  }
+  .md-table thead th {
+    @apply px-4 py-2.5 text-md2-caption font-medium text-md-text-medium
+      border-b border-md-divider whitespace-nowrap;
+  }
+  .md-table tbody td {
+    @apply px-4 py-3 text-md2-body2 text-md-text-high
+      border-b border-md-card-border align-middle;
+  }
+  .md-table tbody tr:last-child td {
+    @apply border-b-0;
+  }
+  .md-table tbody tr:hover td {
+    @apply bg-md-surface-1;
+  }
+
+  /* ------------------------------------------------------------------
+   * 14.5 数据指标（余额 / 绩点 / 统计数字）
+   * ------------------------------------------------------------------ */
+
+  /* 指标区：一组数字并排，**不各自包卡片**，用竖向分割线隔开。
+   * 改版前是 4 张独立卡片 + 每张内部再画一条分割线，两层线很吵。 */
+  .md-metrics {
+    @apply grid gap-x-6 gap-y-5;
+  }
+  .md-metric {
+    @apply min-w-0;
+  }
+  .md-metric-label {
+    @apply flex items-center gap-1.5 text-md2-caption text-md-text-medium;
+  }
+  .md-metric-value {
+    @apply mt-1 text-md2-metric tabular-nums text-md-text-high;
+  }
+  .md-metric-hint {
+    @apply mt-0.5 text-[11px] leading-4 text-md-text-disabled;
+  }
+  /* 指标组之间的竖线（宽屏） */
+  .md-metric-divided > * + * {
+    @apply border-l border-md-card-border pl-6;
+  }
+
+  /* 单个指标卡片（只有在它真的是独立实体、需要单独点击时才用） */
+  .md-metric-card {
+    @apply md-card p-4 flex flex-col;
+  }
+
+  /* ------------------------------------------------------------------
+   * 15. 视图切换（全站唯一的「切一组视图」控件）
+   * ------------------------------------------------------------------
+   * 统一前有三套并存，同一功能长相不同：
+   *   作业页「作业/考试」→ chip 药丸
+   *   作业页「待完成/已完成」→ 下划线 tab
+   *   流水页「7/30/90 天」→ 分段控件
+   * 现在统一为**下划线 tab 一套**（MD2 Tabs，Gmail/Keep 同款）：
+   *   - 有图标 + 文字 + 计数
+   *   - 选中态：主色文字 + 2px 下划线
+   *   - 用于「切换当前视图/数据集」
+   *
+   * 区分：
+   *   .md-tabs  = 切换视图/数据集（作业↔考试、待完成↔已完成、7天↔30天）
+   *   .md-chip-filter = **同一列表内**的轻量筛选（楼层、类型），可多组并存
+   * ------------------------------------------------------------------ */
+
+  .md-tabs {
+    @apply flex items-center gap-1 border-b border-md-divider overflow-x-auto no-scrollbar;
+  }
+  .md-tab {
+    @apply relative inline-flex items-center gap-1.5 px-4 h-11 -mb-px shrink-0
+      text-md2-button text-md-text-medium bg-transparent
+      border-b-2 border-transparent whitespace-nowrap
+      transition-colors duration-md2-short ease-md2-standard
+      hover:text-md-text-high hover:bg-md-surface-1;
+  }
+  .md-tab-active {
+    @apply md-tab text-md-primary border-md-primary font-medium;
+  }
+  .md-tab-active:hover {
+    @apply bg-transparent text-md-primary;
+  }
+  /* tab 里的计数：与文字同色，降透明度 */
+  .md-tab-count {
+    @apply tabular-nums opacity-70;
+  }
+
+  /* ------------------------------------------------------------------
+   * 16. 分段控件（对应 App 的 SegmentedButton）
+   * ------------------------------------------------------------------ */
+
+  .md-segmented {
+    @apply inline-flex items-center p-0.5 rounded-md2-md bg-md-surface-2;
+  }
+  .md-segment {
+    @apply inline-flex items-center justify-center gap-1.5 px-3 h-8 rounded-md2-sm
+      text-md2-button text-md-text-medium bg-transparent
+      transition-all duration-md2-short ease-md2-standard
+      hover:text-md-text-high select-none;
+  }
+  .md-segment-active {
+    @apply md-segment bg-md-surface-card text-md-text-high shadow-dp1 font-medium;
+  }
+}
+
+@layer utilities {
+  /* 移动端安全区域 */
+  .safe-bottom {
+    padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+  }
+  .safe-top {
+    padding-top: max(0.5rem, env(safe-area-inset-top));
+  }
+
+  /* 隐藏滚动条 */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  /* 文本截断 */
+  .line-clamp-1 {
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+ * 全局滚动条（WebKit）
+ * ------------------------------------------------------------------------- */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-scrollbar-thumb);
+  border-radius: 9999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-scrollbar-thumb-hover);
+  background-clip: padding-box;
+}

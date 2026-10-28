@@ -1,0 +1,29 @@
+{
+  "name": "chilleast-browser",
+  "version": "1.0.0",
+  "private": true,
+  "description": "ChillEast Browser - 湖南农业大学校园服务网页版（基于 Cloudflare Worker 零状态中转）",
+  "scripts": {
+    "dev:worker": "cd worker && npm run dev",
+    "dev:web": "cd web && npm run dev",
+    "build:web": "cd web && npm run build",
+    "typecheck:worker": "cd worker && npm run typecheck",
+    "icons": "node scripts/build-icons.mjs && node scripts/icon-lint.mjs",
+    "icon:check": "node scripts/icon-lint.mjs",
+    "logo:icons": "python3 scripts/build-logo-icons.py",
+    "test": "cd worker && npm test",
+    "deploy": "cd web && npm run build && cd ../worker && npm run deploy",
+    "component:check": "node scripts/component-lint.mjs",
+    "ui:check": "node scripts/icon-lint.mjs && node scripts/component-lint.mjs",
+    "sync:check": "node scripts/verify-backup-logic.mjs && node scripts/verify-backup-logic.cjs"
+  },
+  "keywords": [
+    "chilleast",
+    "cloudflare-worker",
+    "stateless-relay",
+    "hunau",
+    "vue3"
+  ],
+  "author": "SoilZhu",
+  "license": "MIT"
+}

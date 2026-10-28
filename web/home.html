@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#ffffff" />
+    <script>
+      (function() {
+        try {
+          var saved = localStorage.getItem('app_theme_mode') || localStorage.getItem('theme_mode');
+          var mode = (saved === 'light' || saved === 'dark' || saved === 'system') ? saved : 'system';
+          var isDark = mode === 'dark' || (mode === 'system' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+          if (isDark) {
+            document.documentElement.classList.add('dark');
+            document.documentElement.style.colorScheme = 'dark';
+            var meta = document.querySelector('meta[name="theme-color"]');
+            if (meta) meta.setAttribute('content', '#202124');
+          }
+        } catch (e) {}
+      })();
+    </script>
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="application-name" content="自在东湖" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="自在东湖" />
+    <meta name="msapplication-TileColor" content="#ffffff" />
+    <meta
+      name="description"
+      content="自在东湖 · 湖南农业大学校园服务，课表、成绩、图书馆、电费一处查看。"
+    />
+    <title>自在东湖 · 校园服务</title>
+
+    <!-- 站点图标（由 scripts/build-logo-icons.py 生成，勿手改）
+         浅色 / 深色两套按系统配色切换；不支持 media 的浏览器取第一条，
+         根路径的 /favicon.ico 由浏览器自动兜底。 -->
+    <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16.png" media="(prefers-color-scheme: light)" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png" media="(prefers-color-scheme: light)" />
+    <link rel="icon" type="image/png" sizes="48x48" href="/icons/favicon-48.png" media="(prefers-color-scheme: light)" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16-dark.png" media="(prefers-color-scheme: dark)" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32-dark.png" media="(prefers-color-scheme: dark)" />
+    <link rel="icon" type="image/png" sizes="48x48" href="/icons/favicon-48-dark.png" media="(prefers-color-scheme: dark)" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <script type="module" src="/src/landing.ts"></script>
+  </head>
+  <body class="bg-md-background text-md-text-high min-h-screen antialiased font-sans">
+    <div id="app"></div>
+  </body>
+</html>

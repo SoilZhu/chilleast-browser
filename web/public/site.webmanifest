@@ -1,0 +1,80 @@
+{
+  "id": "/",
+  "name": "自在东湖 · 校园服务",
+  "short_name": "自在东湖",
+  "description": "湖南农业大学校园服务：课表日程、成绩查询、图书借阅、宿舍电费与日常报修",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#ffffff",
+  "theme_color": "#ffffff",
+  "lang": "zh-CN",
+  "dir": "ltr",
+  "categories": [
+    "education",
+    "productivity",
+    "utilities"
+  ],
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "课表日程",
+      "short_name": "课表",
+      "description": "查看今日课程与周课表",
+      "url": "/?tab=timetable",
+      "icons": [
+        {
+          "src": "/icons/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "成绩查询",
+      "short_name": "成绩",
+      "description": "查看各学期成绩与绩点",
+      "url": "/?tab=scores",
+      "icons": [
+        {
+          "src": "/icons/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "宿舍电费",
+      "short_name": "电费",
+      "description": "查询宿舍剩余电量与充值记录",
+      "url": "/?tab=electricity",
+      "icons": [
+        {
+          "src": "/icons/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    }
+  ]
+}

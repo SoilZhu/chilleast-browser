@@ -1,0 +1,20 @@
+node_modules/
+dist/
+dist-web/
+.wrangler/
+.dev.vars
+*.log
+.DS_Store
+
+# Material Icons 全量字体缓存（由 scripts/build-icons.mjs 下载）
+.cache/
+.scratch/
+.tmp-icons/
+
+# 本地测试与运行缓存
+worker/test/live.test.ts
+*.sqlite*
+
+# TypeScript 增量构建缓存（由 vue-tsc / tsc 自动生成）
+*.tsbuildinfo
+
