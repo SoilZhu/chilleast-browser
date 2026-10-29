@@ -3,6 +3,7 @@ import { storage, type StudentInfo } from '../utils/storage';
 
 export interface LoginResponse {
   token: string;
+  session?: string;
   student: StudentInfo;
 }
 
@@ -13,6 +14,7 @@ export async function login(oaId: string, oaKey: string): Promise<LoginResponse>
   });
   if (data?.token) {
     storage.setToken(data.token);
+    if (data.session) storage.setSession(data.session);
     if (data.student) storage.setStudent(data.student);
   }
   return data;
@@ -27,6 +29,7 @@ export async function logout(): Promise<void> {
     await apiRequest('/api/auth/logout', { method: 'POST' });
   } finally {
     storage.removeToken();
+    storage.removeSession();
     storage.removeStudent();
   }
 }

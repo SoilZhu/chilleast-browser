@@ -1,7 +1,7 @@
 import type { Env } from '../env';
 import { fail, ok } from '../util/response';
 import { createStatelessToken, extractBearerCredentials } from '../auth/token';
-import { forgetSession, runWithSession } from '../auth/session-manager';
+import { forgetSession, getResponseSession, runWithSession } from '../auth/session-manager';
 import { LoginError } from '../auth/hunau-login';
 
 export async function handleLogin(request: Request, env: Env): Promise<Response> {
@@ -21,17 +21,19 @@ export async function handleLogin(request: Request, env: Env): Promise<Response>
 
   try {
     // 零状态校验：尝试向学校统一身份认证 (CAS/CIMS) 建立短效会话
-    const credentials = { oaId, oaKey };
+    const credentials = { oaId, oaKey, request };
     const context = await runWithSession(env, credentials, async (ctx) => {
       return ctx.identity;
     });
 
     // 签发自包含的 AES-GCM 加密 Token
     const token = await createStatelessToken(env, credentials);
+    const clientSession = getResponseSession(request);
 
     return ok(
       {
         token,
+        session: clientSession,
         student: {
           username: context?.username || oaId,
           realName: context?.realName || '同学',

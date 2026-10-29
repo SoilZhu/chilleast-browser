@@ -1,6 +1,7 @@
 import { timetableStorage } from './timetableStorage';
 
 const TOKEN_KEY = 'chilleast_token';
+const SESSION_KEY = 'chilleast_client_session';
 const STUDENT_KEY = 'chilleast_student';
 const SCORES_KEY = 'chilleast_scores';
 
@@ -21,6 +22,16 @@ export const storage = {
   },
   removeToken(): void {
     localStorage.removeItem(TOKEN_KEY);
+  },
+
+  getSession(): string | null {
+    return localStorage.getItem(SESSION_KEY);
+  },
+  setSession(session: string): void {
+    localStorage.setItem(SESSION_KEY, session);
+  },
+  removeSession(): void {
+    localStorage.removeItem(SESSION_KEY);
   },
 
   getStudent(): StudentInfo | null {

@@ -52,10 +52,26 @@
 
 ## 隐私与数据
 
-- 不保存任何用户数据：没有数据库、KV、D1，也不把 Cookie 写进任何持久化存储。
-- 登录成功后，学号密码被 AES-256-GCM 封装成自包含 Token，只存在浏览器 localStorage；每次请求通过 `Authorization: Bearer` 提交，Worker 在内存里解密后再去学校系统换会话。
+- 不保存任何用户数据：没有数据库、KV、D1，服务端绝不落盘存储任何 Cookie 或密码。
+- 登录成功后，学号密码被 AES-256-GCM 封装成自包含 Token，只存在浏览器 localStorage；每次请求通过 `Authorization: Bearer` 提交。
+- **客户端自持有加密 Cookie 凭据（零状态加速）**：登录与子系统建立的 CookieJar 会被 AES-256-GCM 密封后回传客户端（`X-Client-Session`），并在后续请求中自动附带。Worker 解密恢复会话即可直连目标业务接口，彻底免去频繁跨洋重复 8~10 步 SSO 登录的巨大握手延迟；一旦会话过期自动安全重登刷新。
 - 清除浏览器站点数据即可退出登录；修改学校密码会让已保存的 Token 失效。
 - 开启云备份后，课表与设置会写入超星云盘的备份文件，供手机端 App 同步。
+
+## CI/CD 与多环境部署
+
+项目配置了 GitHub Actions 自动化持续部署工作流（`.github/workflows/deploy.yml`）：
+
+| 分支 | 环境 | 域名 | 说明 |
+| :--- | :--- | :--- | :--- |
+| **`main`** | 生产环境 (Production) | `web.chilleast.soilzhu.su`<br>`api.chilleast.soilzhu.su` | 生产稳定部署，由 `wrangler deploy` 发布 |
+| **`dev`** | 测试环境 (Development) | `dev.web.chilleast.soilzhu.su`<br>`dev.api.chilleast.soilzhu.su` | 特性测试部署，由 `wrangler deploy --env dev` 发布 |
+
+在 GitHub 仓库的 **Settings -> Secrets and variables -> Actions** 中配置以下 Secrets：
+- `CLOUDFLARE_API_TOKEN`：拥有 Cloudflare Workers 编辑部署权限的 API Token
+- `CLOUDFLARE_ACCOUNT_ID`：（可选）Cloudflare 账户 ID
+
+> **提示**：如果使用自定义域名，请在 Cloudflare 仪表盘或 DNS 中将 `dev.web.chilleast.soilzhu.su` 与 `dev.api.chilleast.soilzhu.su` 解析至该 Worker，并在 Worker 设置中添加对 `chilleast-browser-dev` 的对应 Secret（`SESSION_KEY` 等）。
 
 ## 部署
 

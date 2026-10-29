@@ -9,6 +9,7 @@
 
 import type { Env } from './env';
 import { CORS_HEADERS, fail, json } from './util/response';
+import { getResponseSession } from './auth/session-manager';
 import { handleLogin, handleLogout, handleProfile } from './routes/auth';
 import {
   handleClassrooms,
@@ -95,7 +96,9 @@ export default {
 
     const isApiHost =
       url.hostname === 'api.chilleast.soilzhu.su' ||
-      url.hostname.startsWith('api.');
+      url.hostname === 'dev.api.chilleast.soilzhu.su' ||
+      url.hostname.startsWith('api.') ||
+      url.hostname.startsWith('dev.api.');
 
     // 2. 健康检查与 API 根路径信息
     if (
@@ -124,7 +127,25 @@ export default {
     }
 
     if (apiPath) {
-      try {
+      const attachSessionHeader = (res: Response): Response => {
+        const updatedSession = getResponseSession(request);
+        if (updatedSession) {
+          try {
+            res.headers.set('X-Client-Session', updatedSession);
+          } catch {
+            const cloneHeaders = new Headers(res.headers);
+            cloneHeaders.set('X-Client-Session', updatedSession);
+            return new Response(res.body, {
+              status: res.status,
+              statusText: res.statusText,
+              headers: cloneHeaders,
+            });
+          }
+        }
+        return res;
+      };
+
+      const handleApiRequest = async (): Promise<Response> => {
         switch (apiPath) {
           // 身份认证
           case '/api/auth/login':
@@ -323,12 +344,19 @@ export default {
         }
 
         return fail(`不支持的请求方法: ${request.method}`, 405, 'method_not_allowed');
+      };
+
+      try {
+        const response = await handleApiRequest();
+        return attachSessionHeader(response);
       } catch (err) {
         console.error('Unhandled API Error:', err);
-        return fail(
-          `服务内部异常: ${err instanceof Error ? err.message : String(err)}`,
-          500,
-          'internal_error',
+        return attachSessionHeader(
+          fail(
+            `服务内部异常: ${err instanceof Error ? err.message : String(err)}`,
+            500,
+            'internal_error',
+          ),
         );
       }
     }

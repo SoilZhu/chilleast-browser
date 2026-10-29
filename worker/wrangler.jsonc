@@ -56,5 +56,24 @@
       "pattern": "api.chilleast.soilzhu.su",
       "custom_domain": true
     }
-  ]
+  ],
+  "env": {
+    "dev": {
+      "name": "chilleast-browser-dev",
+      "vars": {
+        "SERVICE_NAME": "chilleast-browser-dev",
+        "ICS_BASE_URL": "https://ics.chilleast.soilzhu.su"
+      },
+      "routes": [
+        {
+          "pattern": "dev.web.chilleast.soilzhu.su",
+          "custom_domain": true
+        },
+        {
+          "pattern": "dev.api.chilleast.soilzhu.su",
+          "custom_domain": true
+        }
+      ]
+    }
+  }
 }
