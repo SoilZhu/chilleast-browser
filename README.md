@@ -52,38 +52,9 @@
 
 ## 隐私与数据
 
-- 不保存任何用户数据：没有数据库、KV、D1，服务端绝不落盘存储任何 Cookie 或密码。
-- 登录成功后，学号密码被 AES-256-GCM 封装成自包含 Token，只存在浏览器 localStorage；每次请求通过 `Authorization: Bearer` 提交。
-- **客户端自持有加密 Cookie 凭据（零状态加速）**：登录与子系统建立的 CookieJar 会被 AES-256-GCM 密封后回传客户端（`X-Client-Session`），并在后续请求中自动附带。Worker 解密恢复会话即可直连目标业务接口，彻底免去频繁跨洋重复 8~10 步 SSO 登录的巨大握手延迟；一旦会话过期自动安全重登刷新。
+- 不保存任何用户数据，服务端绝不存储任何 Cookie 或密码。
 - 清除浏览器站点数据即可退出登录；修改学校密码会让已保存的 Token 失效。
 - 开启云备份后，课表与设置会写入超星云盘的备份文件，供手机端 App 同步。
-
-## CI/CD 与多环境自动化部署（Cloudflare 官方 GitHub App）
-
-项目深度适配 Cloudflare 官方 **Workers Builds (GitHub App)**，实现推送分支即自动云端构建与部署，无需在 GitHub 手动管理 API Token 密钥。同时配置了轻量 GitHub Actions（`.github/workflows/ci.yml`）用于代码门禁与自动化测试。
-
-| 分支 | 关联 Worker | 自定义域名 | 说明 |
-| :--- | :--- | :--- | :--- |
-| **`main`** | `chilleast-browser` | `web.chilleast.soilzhu.su`<br>`api.chilleast.soilzhu.su` | 生产稳定环境，合并即发布 |
-| **`dev`** | `chilleast-browser-dev` | `dev.web.chilleast.soilzhu.su`<br>`dev.api.chilleast.soilzhu.su` | 测试预览环境，推送即发布 |
-
-### Cloudflare 仪表盘配置步骤
-
-1. 在 Cloudflare 控制台进入 **Compute (Workers & Pages)** -> **Create application** -> 选择 **Connect to Git**，安装并授权官方 **Cloudflare GitHub App**；
-2. **连接生产环境 Worker（`chilleast-browser`）**：
-   - **Production branch**：选择 `main`
-   - **Build command**：`npm run build:cf:prod`
-   - **Deploy command**：`cd worker && npx wrangler deploy`
-   - **Custom Domains**：绑定 `web.chilleast.soilzhu.su` 与 `api.chilleast.soilzhu.su`
-   - **Variables and Secrets**：添加 `SESSION_KEY`（与可选的 `ACCOUNT_PEPPER`、`ICS_API_KEY`）
-3. **连接测试环境 Worker（`chilleast-browser-dev`）**：
-   - 再次点击 **Create application** -> **Connect to Git** 选中本仓库
-   - **Production branch**：选择 `dev`
-   - **Build command**：`npm run build:cf:dev`
-   - **Deploy command**：`cd worker && npx wrangler deploy --env dev`
-   - **Custom Domains**：绑定 `dev.web.chilleast.soilzhu.su` 与 `dev.api.chilleast.soilzhu.su`
-   - **Variables and Secrets**：添加测试用的 `SESSION_KEY` 等相同配置
-4. 配置完成后，以后凡是推送 `main` 分支会自动发布到生产，推送 `dev` 分支会自动发布到测试，并在 GitHub 每次 Commit / PR 下直观展示构建进度。
 
 ## 部署
 
