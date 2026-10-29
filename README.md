@@ -58,20 +58,32 @@
 - 清除浏览器站点数据即可退出登录；修改学校密码会让已保存的 Token 失效。
 - 开启云备份后，课表与设置会写入超星云盘的备份文件，供手机端 App 同步。
 
-## CI/CD 与多环境部署
+## CI/CD 与多环境自动化部署（Cloudflare 官方 GitHub App）
 
-项目配置了 GitHub Actions 自动化持续部署工作流（`.github/workflows/deploy.yml`）：
+项目深度适配 Cloudflare 官方 **Workers Builds (GitHub App)**，实现推送分支即自动云端构建与部署，无需在 GitHub 手动管理 API Token 密钥。同时配置了轻量 GitHub Actions（`.github/workflows/ci.yml`）用于代码门禁与自动化测试。
 
-| 分支 | 环境 | 域名 | 说明 |
+| 分支 | 关联 Worker | 自定义域名 | 说明 |
 | :--- | :--- | :--- | :--- |
-| **`main`** | 生产环境 (Production) | `web.chilleast.soilzhu.su`<br>`api.chilleast.soilzhu.su` | 生产稳定部署，由 `wrangler deploy` 发布 |
-| **`dev`** | 测试环境 (Development) | `dev.web.chilleast.soilzhu.su`<br>`dev.api.chilleast.soilzhu.su` | 特性测试部署，由 `wrangler deploy --env dev` 发布 |
+| **`main`** | `chilleast-browser` | `web.chilleast.soilzhu.su`<br>`api.chilleast.soilzhu.su` | 生产稳定环境，合并即发布 |
+| **`dev`** | `chilleast-browser-dev` | `dev.web.chilleast.soilzhu.su`<br>`dev.api.chilleast.soilzhu.su` | 测试预览环境，推送即发布 |
 
-在 GitHub 仓库的 **Settings -> Secrets and variables -> Actions** 中配置以下 Secrets：
-- `CLOUDFLARE_API_TOKEN`：拥有 Cloudflare Workers 编辑部署权限的 API Token
-- `CLOUDFLARE_ACCOUNT_ID`：（可选）Cloudflare 账户 ID
+### Cloudflare 仪表盘配置步骤
 
-> **提示**：如果使用自定义域名，请在 Cloudflare 仪表盘或 DNS 中将 `dev.web.chilleast.soilzhu.su` 与 `dev.api.chilleast.soilzhu.su` 解析至该 Worker，并在 Worker 设置中添加对 `chilleast-browser-dev` 的对应 Secret（`SESSION_KEY` 等）。
+1. 在 Cloudflare 控制台进入 **Compute (Workers & Pages)** -> **Create application** -> 选择 **Connect to Git**，安装并授权官方 **Cloudflare GitHub App**；
+2. **连接生产环境 Worker（`chilleast-browser`）**：
+   - **Production branch**：选择 `main`
+   - **Build command**：`npm run build:cf:prod`
+   - **Deploy command**：`cd worker && npx wrangler deploy`
+   - **Custom Domains**：绑定 `web.chilleast.soilzhu.su` 与 `api.chilleast.soilzhu.su`
+   - **Variables and Secrets**：添加 `SESSION_KEY`（与可选的 `ACCOUNT_PEPPER`、`ICS_API_KEY`）
+3. **连接测试环境 Worker（`chilleast-browser-dev`）**：
+   - 再次点击 **Create application** -> **Connect to Git** 选中本仓库
+   - **Production branch**：选择 `dev`
+   - **Build command**：`npm run build:cf:dev`
+   - **Deploy command**：`cd worker && npx wrangler deploy --env dev`
+   - **Custom Domains**：绑定 `dev.web.chilleast.soilzhu.su` 与 `dev.api.chilleast.soilzhu.su`
+   - **Variables and Secrets**：添加测试用的 `SESSION_KEY` 等相同配置
+4. 配置完成后，以后凡是推送 `main` 分支会自动发布到生产，推送 `dev` 分支会自动发布到测试，并在 GitHub 每次 Commit / PR 下直观展示构建进度。
 
 ## 部署
 

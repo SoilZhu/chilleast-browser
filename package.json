@@ -14,6 +14,10 @@
     "test": "cd worker && npm test",
     "deploy": "cd web && npm run build && cd ../worker && npm run deploy",
     "deploy:dev": "cd web && VITE_API_BASE=https://dev.api.chilleast.soilzhu.su npm run build && cd ../worker && npm run deploy:dev",
+    "build:cf:prod": "cd web && npm install && npm run build && cd ../worker && npm install",
+    "build:cf:dev": "cd web && npm install && VITE_API_BASE=https://dev.api.chilleast.soilzhu.su npm run build && cd ../worker && npm install",
+    "deploy:cf:prod": "npm run build:cf:prod && cd worker && npx wrangler deploy",
+    "deploy:cf:dev": "npm run build:cf:dev && cd worker && npx wrangler deploy --env dev",
     "component:check": "node scripts/component-lint.mjs",
     "ui:check": "node scripts/icon-lint.mjs && node scripts/component-lint.mjs",
     "sync:check": "node scripts/verify-backup-logic.mjs && node scripts/verify-backup-logic.cjs"
