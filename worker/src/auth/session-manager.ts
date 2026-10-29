@@ -8,15 +8,93 @@
  * Worker 实例回收自动消失，服务端零数据留存。
  */
 
-import { CookieJar } from './cookies';
+import { CookieJar, type StoredCookie } from './cookies';
 import { CookieSession } from './http';
 import { LoginError, login, type LoginIdentity, type LoginResult } from './hunau-login';
-import { credentialFingerprint } from './crypto-box';
+import { credentialFingerprint, getEffectiveSessionKey, open, seal } from './crypto-box';
 import type { Env } from '../env';
 
 export interface Credentials {
   oaId: string;
   oaKey: string;
+  clientSession?: string | null;
+  request?: Request;
+}
+
+export interface ClientSessionPayload {
+  oaId: string;
+  identity: LoginIdentity | null;
+  cookies: StoredCookie[];
+  exp: number;
+}
+
+/** 客户端自持有加密 Cookie 凭据默认有效期：2 小时 */
+export const CLIENT_SESSION_TTL_MS = 2 * 60 * 60 * 1000;
+
+/** 关联请求与最新加密会话的 WeakMap */
+const responseSessionMap = new WeakMap<Request, string>();
+
+export function setResponseSession(request: Request, sealedSession: string): void {
+  responseSessionMap.set(request, sealedSession);
+}
+
+export function getResponseSession(request: Request): string | undefined {
+  return responseSessionMap.get(request);
+}
+
+/**
+ * 将 CookieJar 与身份密封为可安全由客户端持有的自包含加密串
+ */
+export async function sealClientSession(
+  env: Env,
+  oaId: string,
+  identity: LoginIdentity | null,
+  jar: CookieJar,
+  ttlMs = CLIENT_SESSION_TTL_MS,
+): Promise<string> {
+  const payload: ClientSessionPayload = {
+    oaId: oaId.trim(),
+    identity,
+    cookies: jar.toJSON(),
+    exp: Date.now() + ttlMs,
+  };
+  const jsonStr = JSON.stringify(payload);
+  const sealed = await seal(jsonStr, getEffectiveSessionKey(env));
+  return sealed.replace(/\+/g, '-').replace(/\//g, '_');
+}
+
+/**
+ * 校验并解密客户端提交的加密 Cookie 凭据
+ */
+export async function openClientSession(
+  env: Env,
+  sealed: string,
+  expectedOaId: string,
+): Promise<{ jar: CookieJar; identity: LoginIdentity | null } | null> {
+  if (!sealed) return null;
+  const trimmed = sealed.trim();
+  if (!trimmed) return null;
+  try {
+    const rawSealed = trimmed.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonStr = await open(rawSealed, getEffectiveSessionKey(env));
+    const payload = JSON.parse(jsonStr) as Partial<ClientSessionPayload>;
+    if (
+      payload &&
+      payload.oaId === expectedOaId.trim() &&
+      typeof payload.exp === 'number' &&
+      Date.now() < payload.exp &&
+      Array.isArray(payload.cookies) &&
+      payload.cookies.length > 0
+    ) {
+      const jar = CookieJar.fromJSON(payload.cookies);
+      if (jar.size > 0) {
+        return { jar, identity: payload.identity ?? null };
+      }
+    }
+  } catch {
+    return null;
+  }
+  return null;
 }
 
 export class SessionUnavailableError extends Error {
@@ -98,7 +176,12 @@ export async function acquireSession(
   const now = Date.now();
   const cached = ramSessionCache.get(key);
 
+  // 1. 优先命中单实例 RAM 防抖缓存（10 分钟）
   if (cached !== undefined && now < cached.expiresAt) {
+    if (credentials.request && !getResponseSession(credentials.request)) {
+      const sealed = await sealClientSession(env, oaId, cached.identity, cached.jar);
+      setResponseSession(credentials.request, sealed);
+    }
     return {
       session: new CookieSession(cached.jar),
       identity: cached.identity,
@@ -106,10 +189,34 @@ export async function acquireSession(
     };
   }
 
-  // 检查是否已有同一凭据正在登录中（并发排队复用同一 Promise）
+  // 2. 检查客户端自持有的加密 Cookie 凭据 (方案三：跨 Worker 实例零握手恢复)
+  if (credentials.clientSession) {
+    const restored = await openClientSession(env, credentials.clientSession, oaId);
+    if (restored !== null) {
+      ramSessionCache.set(key, {
+        jar: restored.jar,
+        identity: restored.identity,
+        expiresAt: Date.now() + SESSION_RAM_TTL_MS,
+      });
+      if (credentials.request) {
+        setResponseSession(credentials.request, credentials.clientSession);
+      }
+      return {
+        session: new CookieSession(restored.jar),
+        identity: restored.identity,
+        didLogin: false,
+      };
+    }
+  }
+
+  // 3. 检查是否已有同一凭据正在登录中（并发排队复用同一 Promise）
   const inFlight = inFlightLogins.get(key);
   if (inFlight !== undefined) {
     const result = await inFlight;
+    if (credentials.request) {
+      const sealed = await sealClientSession(env, oaId, result.identity, result.jar);
+      setResponseSession(credentials.request, sealed);
+    }
     return {
       session: new CookieSession(result.jar),
       identity: result.identity,
@@ -117,7 +224,7 @@ export async function acquireSession(
     };
   }
 
-  // 内存无缓存且无在途登录：发起学校 SSO 登录
+  // 4. 内存无缓存且无有效客户端会话：发起学校 SSO 完整登录
   const loginPromise = (async () => {
     try {
       return await login(oaId, oaKey);
@@ -134,6 +241,11 @@ export async function acquireSession(
     expiresAt: Date.now() + SESSION_RAM_TTL_MS,
   });
 
+  if (credentials.request) {
+    const sealed = await sealClientSession(env, oaId, result.identity, result.jar);
+    setResponseSession(credentials.request, sealed);
+  }
+
   return {
     session: new CookieSession(result.jar),
     identity: result.identity,
@@ -142,7 +254,7 @@ export async function acquireSession(
 }
 
 /**
- * 把工具执行期间新落的 Cookie 存回内存缓存。
+ * 把工具执行期间新落的 Cookie 存回内存缓存与客户端加密凭据。
  */
 async function persistSession(
   env: Env,
@@ -157,6 +269,15 @@ async function persistSession(
     if (context.identity !== null) {
       existing.identity = context.identity;
     }
+  }
+  if (credentials.request) {
+    const sealed = await sealClientSession(
+      env,
+      credentials.oaId,
+      context.identity,
+      context.session.jar,
+    );
+    setResponseSession(credentials.request, sealed);
   }
 }
 
@@ -174,8 +295,8 @@ export async function forgetSession(env: Env, credentials: Credentials): Promise
  * 工具执行的标准入口。
  *
  * 会做两件事：
- *  1. 保证有会话（命中内存防抖则直接复用，否则去学校 SSO 登录）
- *  2. 如果工具抛 SessionExpiredError，清掉内存缓存重登一次再试
+ *  1. 保证有会话（命中内存防抖或客户端自持有凭据则直接复用，否则去学校 SSO 登录）
+ *  2. 如果工具抛 SessionExpiredError，清掉缓存会话并强制重新走一次 SSO 登录
  */
 export async function runWithSession<T>(
   env: Env,
@@ -185,16 +306,17 @@ export async function runWithSession<T>(
   const context = await acquireSession(env, credentials);
   try {
     const result = await fn(context);
-    // 工具可能刚建立了子系统会话，存回内存供短时间内复用
+    // 工具可能刚建立了子系统会话，存回内存供短时间内复用并同步给客户端
     await persistSession(env, credentials, context);
     return result;
   } catch (error) {
     if (!(error instanceof SessionExpiredError)) throw error;
     if (!context.didLogin) {
-      // 本次没登录，说明是缓存的会话在学校端过期了：强制从内存删除并重登一次
+      // 说明是缓存的会话在学校端过期了：强制清空并重登一次
       await invalidateSession(env, credentials);
     }
-    const refreshed = await acquireSession(env, credentials);
+    // 强制忽略旧的 clientSession，走真实登录刷新
+    const refreshed = await acquireSession(env, { ...credentials, clientSession: null });
     const result = await fn(refreshed);
     await persistSession(env, credentials, refreshed);
     return result;

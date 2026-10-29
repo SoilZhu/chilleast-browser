@@ -17,4 +17,5 @@ worker/test/live.test.ts
 
 # TypeScript 增量构建缓存（由 vue-tsc / tsc 自动生成）
 *.tsbuildinfo
+worker-configuration.d.ts
 

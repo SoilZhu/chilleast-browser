@@ -2,6 +2,13 @@ import { describe, expect, it } from 'vitest';
 import worker from '../src/index';
 import type { Env } from '../src/env';
 import { createStatelessToken, decodeTokenCredentials } from '../src/auth/token';
+import { CookieJar, type StoredCookie } from '../src/auth/cookies';
+import {
+  sealClientSession,
+  openClientSession,
+  acquireSession,
+  clearRamSessionCache,
+} from '../src/auth/session-manager';
 import { parseBackupFileName } from '../src/school/hunau/cloudisk';
 import { isSupportedBackupFormat, readDormitory } from '../src/school/hunau/backup';
 import { applyTimetableRules, parseWeeks } from '../src/school/hunau/timetable-rules';
@@ -1317,6 +1324,91 @@ describe('云备份 · 双轨仲裁与分轨收敛（SYNC-ALIGN 4.2 / 5）', () 
       const body = (await res.json()) as any;
       expect(body.ok).toBe(false);
       expect(body.error?.code).toBe('unauthorized');
+    });
+  });
+
+  describe('方案三 · 客户端自持有加密 Cookie 凭据 (Client-Side Encrypted Session Cache)', () => {
+    const fakeCookie: StoredCookie = {
+      name: 'JSESSIONID',
+      value: 'session_xyz123',
+      domain: 'ydjwxt.hunau.edu.cn',
+      path: '/',
+      hostOnly: true,
+      secure: false,
+      httpOnly: true,
+    };
+
+    it('sealClientSession / openClientSession 编解码完整性', async () => {
+      const jar = new CookieJar([fakeCookie]);
+      const identity = { username: '20230001', realName: '测试同学' };
+
+      const sealed = await sealClientSession(env, '20230001', identity, jar);
+      expect(typeof sealed).toBe('string');
+      expect(sealed.length).toBeGreaterThan(32);
+
+      const restored = await openClientSession(env, sealed, '20230001');
+      expect(restored).not.toBeNull();
+      expect(restored?.identity?.username).toBe('20230001');
+      expect(restored?.identity?.realName).toBe('测试同学');
+      expect(restored?.jar.get('ydjwxt.hunau.edu.cn', 'JSESSIONID')).toBe('session_xyz123');
+    });
+
+    it('openClientSession 学工号不匹配时应拒绝解密', async () => {
+      const jar = new CookieJar([fakeCookie]);
+      const sealed = await sealClientSession(env, '20230001', null, jar);
+
+      const restored = await openClientSession(env, sealed, '20230002');
+      expect(restored).toBeNull();
+    });
+
+    it('openClientSession 过期凭据应拒绝解密', async () => {
+      const jar = new CookieJar([fakeCookie]);
+      // 传入负 TTL 模拟已过期
+      const sealed = await sealClientSession(env, '20230001', null, jar, -1000);
+
+      const restored = await openClientSession(env, sealed, '20230001');
+      expect(restored).toBeNull();
+    });
+
+    it('openClientSession 篡改密文应安全返回 null', async () => {
+      const restored = await openClientSession(env, 'invalid.tampered.token', '20230001');
+      expect(restored).toBeNull();
+    });
+
+    it('acquireSession 能直接通过 clientSession 恢复会话而无需发起任何网络登录', async () => {
+      clearRamSessionCache();
+      const jar = new CookieJar([fakeCookie]);
+      const sealed = await sealClientSession(env, '20230001', { username: '20230001', realName: '王同学' }, jar);
+
+      // acquireSession 传入 clientSession
+      const req = new Request('http://localhost/api/test');
+      const context = await acquireSession(env, {
+        oaId: '20230001',
+        oaKey: 'mock_password',
+        clientSession: sealed,
+        request: req,
+      });
+
+      expect(context.didLogin).toBe(false);
+      expect(context.identity?.username).toBe('20230001');
+      expect(context.session.jar.get('ydjwxt.hunau.edu.cn', 'JSESSIONID')).toBe('session_xyz123');
+    });
+
+    it('OPTIONS 预检与响应应暴露 X-Client-Session CORS 头', async () => {
+      const optReq = new Request('http://localhost/api/academic/scores', {
+        method: 'OPTIONS',
+      });
+      const optRes = await worker.fetch(optReq, env, ctx);
+      expect(optRes.headers.get('Access-Control-Allow-Headers')).toContain('X-Client-Session');
+      expect(optRes.headers.get('Access-Control-Expose-Headers')).toContain('X-Client-Session');
+    });
+
+    it('dev.api.chilleast.soilzhu.su 域名应正确被识别为 API 路由', async () => {
+      const devReq = new Request('https://dev.api.chilleast.soilzhu.su/health');
+      const res = await worker.fetch(devReq, env, ctx);
+      expect(res.status).toBe(200);
+      const data = (await res.json()) as any;
+      expect(data.status).toBe('ok');
     });
   });
 });

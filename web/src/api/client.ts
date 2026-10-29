@@ -2,7 +2,13 @@ import { storage } from '../utils/storage';
 
 export const API_BASE =
   import.meta.env.VITE_API_BASE ??
-  (import.meta.env.PROD ? 'https://api.chilleast.soilzhu.su' : '');
+  (typeof window !== 'undefined' &&
+  (window.location.hostname === 'dev.web.chilleast.soilzhu.su' ||
+    window.location.hostname.startsWith('dev.'))
+    ? 'https://dev.api.chilleast.soilzhu.su'
+    : import.meta.env.PROD
+      ? 'https://api.chilleast.soilzhu.su'
+      : '');
 
 export class ApiError extends Error {
   code: string;
@@ -20,6 +26,7 @@ export async function apiRequest<T = any>(
   options: RequestInit = {},
 ): Promise<T> {
   const token = storage.getToken();
+  const clientSession = storage.getSession();
   const headers = new Headers(options.headers || {});
 
   if (!headers.has('Content-Type') && options.method && options.method !== 'GET') {
@@ -28,6 +35,11 @@ export async function apiRequest<T = any>(
 
   if (token && !headers.has('Authorization')) {
     headers.set('Authorization', `Bearer ${token}`);
+  }
+
+  // 方案三：自动上报客户端自持有的加密 Cookie 凭据，加速会话复用
+  if (clientSession && !headers.has('X-Client-Session')) {
+    headers.set('X-Client-Session', clientSession);
   }
 
   const url =
@@ -49,6 +61,12 @@ export async function apiRequest<T = any>(
     );
   }
 
+  // 捕获服务端回传的最新的加密会话凭据并同步至本地
+  const updatedSession = response.headers.get('x-client-session');
+  if (updatedSession) {
+    storage.setSession(updatedSession);
+  }
+
   let body: any;
   const contentType = response.headers.get('content-type') || '';
   if (contentType.includes('application/json')) {
@@ -64,11 +82,16 @@ export async function apiRequest<T = any>(
   if (!response.ok) {
     if (response.status === 401) {
       storage.removeToken();
+      storage.removeSession();
       window.dispatchEvent(new CustomEvent('chilleast:unauthorized'));
     }
     const message = body?.error?.message || body?.message || `请求失败 (${response.status})`;
     const code = body?.error?.code || 'request_failed';
     throw new ApiError(message, response.status, code);
+  }
+
+  if (body?.data?.session && typeof body.data.session === 'string') {
+    storage.setSession(body.data.session);
   }
 
   return body?.data !== undefined ? body.data : body;

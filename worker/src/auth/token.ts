@@ -82,13 +82,25 @@ export async function extractBearerCredentials(
 ): Promise<Credentials | null> {
   const authHeader = request.headers.get('Authorization') ?? '';
   const match = /^Bearer\s+(.+)$/i.exec(authHeader.trim());
+  let creds: Credentials | null = null;
   if (!match) {
     // 兼容可能的前端 Header 或 Query
     const queryToken = new URL(request.url).searchParams.get('token');
     if (queryToken) {
-      return await decodeTokenCredentials(env, queryToken);
+      creds = await decodeTokenCredentials(env, queryToken);
+    } else {
+      return null;
     }
-    return null;
+  } else {
+    creds = await decodeTokenCredentials(env, match[1]);
   }
-  return await decodeTokenCredentials(env, match[1]);
+
+  if (creds) {
+    const clientSession =
+      request.headers.get('X-Client-Session') ||
+      request.headers.get('x-client-session');
+    creds.clientSession = clientSession ? clientSession.trim() : null;
+    creds.request = request;
+  }
+  return creds;
 }
